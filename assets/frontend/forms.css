@@ -271,6 +271,18 @@
     border-top: 1px solid var(--rsfm-border);
 }
 
+.rsfm-legal-notice {
+    margin: 0.9rem 0 0;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: var(--rsfm-muted);
+}
+
+.rsfm-legal-notice a {
+    color: var(--rsfm-text);
+    text-decoration: underline;
+}
+
 /* Buttons */
 .rsfm-btn {
     display: inline-flex;
@@ -342,7 +354,7 @@
     cursor: pointer;
 }
 
-/* Floating captcha provider attribution (shown only while protected fields are focused) */
+/* Floating captcha provider attribution (shown while a protected popup is open) */
 .rsfm-provider-attribution {
     position: fixed;
     left: 0.9rem;

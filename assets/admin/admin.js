@@ -35,6 +35,7 @@
     var saveBtn       = document.getElementById('rsfm-save-btn');
     var successNotice = document.getElementById('rsfm-save-success');
     var errorNotice   = document.getElementById('rsfm-save-error');
+    var errorNoticeText = errorNotice ? errorNotice.querySelector('p') : null;
 
     // Step 1 bindings
     var titleInput   = document.getElementById('rsfm-field-title');
@@ -56,6 +57,7 @@
     var recaptchaSecretKey= document.getElementById('rsfm-recaptcha-secret-key');
     var turnstileSiteKey  = document.getElementById('rsfm-turnstile-site-key');
     var turnstileSecretKey= document.getElementById('rsfm-turnstile-secret-key');
+    var privacyPolicyUrlInput = document.getElementById('rsfm-privacy-policy-url');
 
     // Step 4 – Submission mode
     var submissionRadios = document.querySelectorAll('[name="rsfm-submission-mode"]');
@@ -77,6 +79,7 @@
     var confirmBodyCodeTextarea= document.getElementById('rsfm-confirmation-body-code');
     var confirmTextBodyTextarea= document.getElementById('rsfm-confirmation-text-body');
     var confirmHtmlCb          = document.getElementById('rsfm-confirmation-html-enabled');
+    var templateResetButtons   = document.querySelectorAll('[data-rsfm-reset-template]');
 
     // Step 4 – Endpoint
     var endpointUrlInput      = document.getElementById('rsfm-endpoint-url');
@@ -211,7 +214,7 @@
                 toolbar1: 'formatselect,bold,italic,bullist,numlist,blockquote,link,unlink,undo,redo,removeformat',
                 toolbar2: '',
             },
-            quicktags: true,
+            quicktags: false,
             mediaButtons: false,
         });
 
@@ -268,6 +271,48 @@
         initMailEditor(confirmBodyTextarea, 'confirmation_html_body');
     }
 
+    function resetMailTemplate(group) {
+        var defaults = (cfg.formDefaults && cfg.formDefaults.submission) ? cfg.formDefaults.submission : null;
+        if (!defaults) {
+            return;
+        }
+
+        if (group === 'owner') {
+            state.form.submission.owner_subject = defaults.owner_subject || '';
+            state.form.submission.owner_html_body = defaults.owner_html_body || '';
+            state.form.submission.owner_text_body = defaults.owner_text_body || '';
+
+            if (ownerSubjectInput) {
+                ownerSubjectInput.value = state.form.submission.owner_subject;
+            }
+            if (ownerBodyTextarea) {
+                setHtmlTemplateValue(ownerBodyTextarea, ownerBodyCodeTextarea, state.form.submission.owner_html_body);
+            }
+            if (ownerTextBodyTextarea) {
+                ownerTextBodyTextarea.value = state.form.submission.owner_text_body;
+            }
+            state.dirty = true;
+            return;
+        }
+
+        if (group === 'confirmation') {
+            state.form.submission.confirmation_subject = defaults.confirmation_subject || '';
+            state.form.submission.confirmation_html_body = defaults.confirmation_html_body || '';
+            state.form.submission.confirmation_text_body = defaults.confirmation_text_body || '';
+
+            if (confirmSubjectInput) {
+                confirmSubjectInput.value = state.form.submission.confirmation_subject;
+            }
+            if (confirmBodyTextarea) {
+                setHtmlTemplateValue(confirmBodyTextarea, confirmBodyCodeTextarea, state.form.submission.confirmation_html_body);
+            }
+            if (confirmTextBodyTextarea) {
+                confirmTextBodyTextarea.value = state.form.submission.confirmation_text_body;
+            }
+            state.dirty = true;
+        }
+    }
+
     // -------------------------------------------------------------------------
     // Populate UI from state
     // -------------------------------------------------------------------------
@@ -293,6 +338,7 @@
         if (recaptchaSecretKey) recaptchaSecretKey.value = sec.recaptcha_secret_key || '';
         if (turnstileSiteKey)   turnstileSiteKey.value   = sec.turnstile_site_key   || '';
         if (turnstileSecretKey) turnstileSecretKey.value = sec.turnstile_secret_key || '';
+        if (privacyPolicyUrlInput) privacyPolicyUrlInput.value = sec.privacy_policy_url || '';
         updateCaptchaConfigVisibility();
 
         // Step 4 – mode
@@ -422,6 +468,10 @@
         if (recaptchaSecretKey)  recaptchaSecretKey.addEventListener('input',  function () { state.form.security.recaptcha_secret_key = recaptchaSecretKey.value; });
         if (turnstileSiteKey)    turnstileSiteKey.addEventListener('input',    function () { state.form.security.turnstile_site_key = turnstileSiteKey.value; });
         if (turnstileSecretKey)  turnstileSecretKey.addEventListener('input',  function () { state.form.security.turnstile_secret_key = turnstileSecretKey.value; });
+        if (privacyPolicyUrlInput) privacyPolicyUrlInput.addEventListener('input', function () {
+            state.form.security.privacy_policy_url = privacyPolicyUrlInput.value;
+            state.dirty = true;
+        });
 
         // Step 4 – mode
         submissionRadios.forEach(function (r) {
@@ -457,6 +507,13 @@
             state.dirty = true;
         });
         if (confirmHtmlCb)         confirmHtmlCb.addEventListener('change',        function () { state.form.submission.confirmation_html_enabled = confirmHtmlCb.checked; });
+
+        templateResetButtons.forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var group = btn.getAttribute('data-rsfm-reset-template') || '';
+                resetMailTemplate(group);
+            });
+        });
 
         // Recipients
         if (addRecipientBtn) addRecipientBtn.addEventListener('click', function () {
@@ -1120,11 +1177,20 @@
                     }
                     showNotice(successNotice);
                 } else {
+                    var message = (json && json.data && json.data.message)
+                        ? json.data.message
+                        : 'Fehler beim Speichern. Bitte versuche es erneut.';
+                    if (errorNoticeText) {
+                        errorNoticeText.textContent = message;
+                    }
                     showNotice(errorNotice);
                 }
             })
             .catch(function () {
                 if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 Speichern'; }
+                if (errorNoticeText) {
+                    errorNoticeText.textContent = 'Fehler beim Speichern. Bitte versuche es erneut.';
+                }
                 showNotice(errorNotice);
             });
     }

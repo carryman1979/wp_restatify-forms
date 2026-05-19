@@ -44,16 +44,58 @@ $excludeNames = @(
     '.git',
     '.github',
     'node_modules',
+    'vendor',
+    'tests',
+    'test',
+    'scripts',
+    'wiki',
+    '.phpunit.cache',
     '.release-tmp',
     'release',
     'src',
     '.env',
-    '.env.local',
-    '*.log'
+    '.env.local'
 )
 
 Get-ChildItem -Path $pluginRoot -Force | Where-Object { $excludeNames -notcontains $_.Name } | ForEach-Object {
     Copy-Item $_.FullName -Destination $stagingDir -Recurse -Force
+}
+
+$removeDirectoryNames = @('tests', 'test')
+Get-ChildItem -Path $stagingDir -Directory -Recurse | Where-Object {
+    $removeDirectoryNames -contains $_.Name.ToLowerInvariant()
+} | Sort-Object FullName -Descending | ForEach-Object {
+    Remove-Item $_.FullName -Recurse -Force
+}
+
+$removeFileNames = @('phpunit.xml', 'phpunit.xml.dist', '.phpunit.result.cache')
+Get-ChildItem -Path $stagingDir -File -Recurse | Where-Object {
+    $removeFileNames -contains $_.Name.ToLowerInvariant()
+} | ForEach-Object {
+    Remove-Item $_.FullName -Force
+}
+
+$removeRootFiles = @(
+    'composer.json',
+    'composer.lock',
+    'package.json',
+    'package-lock.json',
+    'phpunit.xml',
+    'phpunit.xml.dist',
+    '.phpunit.result.cache'
+)
+
+foreach ($fileName in $removeRootFiles) {
+    $candidate = Join-Path $stagingDir $fileName
+    if (Test-Path $candidate) {
+        Remove-Item $candidate -Force
+    }
+}
+
+Get-ChildItem -Path $stagingDir -File -Recurse | Where-Object {
+    $_.Name -like '*.log'
+} | ForEach-Object {
+    Remove-Item $_.FullName -Force
 }
 
 $zipPath = Join-Path $releaseDir "wp-restatify-forms-$Version.zip"
@@ -82,6 +124,22 @@ try {
 }
 finally {
     $zipArchive.Dispose()
+}
+
+$archive = [System.IO.Compression.ZipFile]::OpenRead($zipPath)
+try {
+    $entries = $archive.Entries | Select-Object -ExpandProperty FullName
+
+    if (($entries | Where-Object { $_ -match '\\' }).Count -gt 0) {
+        throw "Invalid ZIP entry separators found. Use '/' in archive entries only."
+    }
+
+    if (-not ($entries -contains 'wp-restatify-forms/wp-restatify-forms.php')) {
+        throw 'Invalid package layout: missing main plugin file in archive root.'
+    }
+}
+finally {
+    $archive.Dispose()
 }
 
 Remove-Item $tempRoot -Recurse -Force

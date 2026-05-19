@@ -67,7 +67,20 @@ final class Restatify_Forms_Options {
             $all[] = $form;
         }
 
-        $saved = (bool) update_option( Restatify_Forms_Constants::OPTION_KEY, array_values( $all ) );
+        $current = get_option( Restatify_Forms_Constants::OPTION_KEY, [] );
+        if ( ! is_array( $current ) ) {
+            $current = [];
+        }
+
+        $next = array_values( $all );
+
+        // update_option returns false when data is unchanged; treat idempotent saves as success.
+        if ( $current == $next ) {
+            $this->register_form_polylang_strings( $form );
+            return true;
+        }
+
+        $saved = (bool) update_option( Restatify_Forms_Constants::OPTION_KEY, $next );
 
         if ( $saved ) {
             $this->register_form_polylang_strings( $form );
@@ -173,6 +186,7 @@ final class Restatify_Forms_Options {
                 'recaptcha_secret_key' => '',
                 'turnstile_site_key'   => '',
                 'turnstile_secret_key' => '',
+                'privacy_policy_url'   => function_exists( 'get_privacy_policy_url' ) ? (string) get_privacy_policy_url() : '',
             ],
             'submission' => [
                 'mode'                        => 'mail',
@@ -208,7 +222,13 @@ final class Restatify_Forms_Options {
             return null;
         }
 
-        return wp_parse_args( $form, $this->get_form_defaults() );
+        $normalized = wp_parse_args( $form, $this->get_form_defaults() );
+
+        if ( isset( $normalized['submission'] ) && is_array( $normalized['submission'] ) ) {
+            $normalized['submission'] = $this->apply_dynamic_submission_defaults( $normalized['submission'] );
+        }
+
+        return $normalized;
     }
 
     /**
@@ -248,6 +268,7 @@ final class Restatify_Forms_Options {
         $form['security']['recaptcha_secret_key'] = sanitize_text_field( (string) $form['security']['recaptcha_secret_key'] );
         $form['security']['turnstile_site_key']   = sanitize_text_field( (string) $form['security']['turnstile_site_key'] );
         $form['security']['turnstile_secret_key'] = sanitize_text_field( (string) $form['security']['turnstile_secret_key'] );
+        $form['security']['privacy_policy_url']   = esc_url_raw( (string) $form['security']['privacy_policy_url'] );
 
         // Submission
         if ( ! is_array( $form['submission'] ) ) {
@@ -362,55 +383,200 @@ final class Restatify_Forms_Options {
     }
 
     private function get_default_owner_template(): string {
-        $title = wp_specialchars_decode( (string) get_bloginfo( 'name' ), ENT_QUOTES );
+        $branding = $this->get_mail_branding_context();
 
-        return '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0;padding:0;background:#f4f6fb;font-family:Arial,sans-serif;color:#0f172a">'
-            . '<tr><td align="center" style="padding:24px 12px">'
-            . '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:680px;border-collapse:collapse;background:#ffffff;border:1px solid rgba(11,18,33,0.08);border-radius:20px;overflow:hidden;box-shadow:0 16px 40px rgba(11,18,33,0.08)">'
-            . '<tr><td style="padding:24px 28px;background:linear-gradient(135deg,#ff6a3d 0%,#0f766e 100%);color:#ffffff">'
-            . '<div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;opacity:.95">Formular-Benachrichtigung</div>'
-            . '<h1 style="margin:8px 0 0;font-size:24px;line-height:1.2;color:#ffffff">Neue Anfrage eingegangen</h1>'
-            . '</td></tr>'
-            . '<tr><td style="padding:28px">'
-            . '<p style="margin:0 0 14px;font-size:16px;line-height:1.6"><strong>Formular:</strong> {form_title}<br><strong>Datum:</strong> {date}</p>'
-            . '{fields_table}'
-            . '<p style="margin:22px 0 0;font-size:14px;line-height:1.65">Bitte prüfe die Angaben vor einer manuellen Weiterverarbeitung.</p>'
-            . '</td></tr>'
-            . '<tr><td style="padding:0 28px 26px">'
-            . '<div style="height:1px;background:linear-gradient(90deg,#ff6a3d 0%,#0f766e 100%);"></div>'
-            . '</td></tr>'
-            . '<tr><td style="padding:0 28px 28px;font-size:12px;line-height:1.6;color:#667085">'
-            . '<p style="margin:0 0 8px"><strong>Disclaimer:</strong> Diese Nachricht enthält organisatorische Informationen. Bitte sende keine sensiblen Daten per E-Mail.</p>'
-            . '<p style="margin:0 0 8px">Diese E-Mail wurde maschinell erstellt. Antworten auf diese Nachricht werden möglicherweise nicht gelesen.</p>'
-            . '<p style="margin:0 0 8px">Schütze die Umwelt, indem du diese E-Mail nicht ausdruckst.</p>'
-            . '<p style="margin:0">Service-Team · ' . esc_html( $title ) . '</p>'
-            . '</td></tr>'
+        $content = '<p style="margin:0 0 16px;">Es wurde eine neue Formular-Einsendung erfasst.</p>'
+            . '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;">'
+            . '<tr><td style="padding:0 0 10px;"><strong>Formular:</strong> {form_title}</td></tr>'
+            . '<tr><td style="padding:0 0 10px;"><strong>Datum:</strong> {date}</td></tr>'
             . '</table>'
-            . '</td></tr>'
-            . '</table>';
+            . '<div style="margin:16px 0 0;">{fields_table}</div>'
+            . '<p style="margin:22px 0 0;">Bitte prüfe die Angaben vor einer manuellen Weiterverarbeitung.</p>';
+
+        return $this->build_default_html_mail( $branding, 'Neue Einsendung', 'Neue Formular-Einsendung', $content );
     }
 
     private function get_default_confirmation_template(): string {
-        return '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0;padding:0;background:#f4f6fb;font-family:Arial,sans-serif;color:#0f172a">'
-            . '<tr><td align="center" style="padding:24px 12px">'
-            . '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:680px;border-collapse:collapse;background:#ffffff;border:1px solid rgba(11,18,33,0.08);border-radius:20px;overflow:hidden;box-shadow:0 16px 40px rgba(11,18,33,0.08)">'
-            . '<tr><td style="padding:24px 28px;background:linear-gradient(135deg,#ff6a3d 0%,#0f766e 100%);color:#ffffff">'
-            . '<div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;opacity:.95">Eingangsbestätigung</div>'
-            . '<h1 style="margin:8px 0 0;font-size:24px;line-height:1.2;color:#ffffff">Vielen Dank für deine Anfrage</h1>'
+        $branding = $this->get_mail_branding_context();
+
+        $content = '<p style="margin:0 0 16px;">Vielen Dank für deine Anfrage. Wir haben deine Nachricht erhalten und melden uns zeitnah bei dir.</p>'
+            . '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;">'
+            . '<tr><td style="padding:0 0 10px;"><strong>Formular:</strong> {form_title}</td></tr>'
+            . '<tr><td style="padding:0 0 10px;"><strong>Eingang:</strong> {date}</td></tr>'
+            . '</table>'
+            . '<div style="margin:16px 0 0;">{fields_table}</div>';
+
+        return $this->build_default_html_mail( $branding, 'Eingangsbestätigung', 'Vielen Dank für deine Anfrage', $content );
+    }
+
+    /**
+     * @param array<string,mixed> $submission
+     * @return array<string,mixed>
+     */
+    private function apply_dynamic_submission_defaults( array $submission ): array {
+        $defaults = $this->get_form_defaults()['submission'];
+
+        $owner_html = (string) ( $submission['owner_html_body'] ?? '' );
+        if ( $owner_html === '' || $this->looks_like_legacy_owner_template( $owner_html ) ) {
+            $submission['owner_html_body'] = $defaults['owner_html_body'];
+        }
+
+        $confirmation_html = (string) ( $submission['confirmation_html_body'] ?? '' );
+        if ( $confirmation_html === '' || $this->looks_like_legacy_confirmation_template( $confirmation_html ) ) {
+            $submission['confirmation_html_body'] = $defaults['confirmation_html_body'];
+        }
+
+        if ( (string) ( $submission['owner_text_body'] ?? '' ) === '' ) {
+            $submission['owner_text_body'] = $defaults['owner_text_body'];
+        }
+
+        if ( (string) ( $submission['confirmation_text_body'] ?? '' ) === '' ) {
+            $submission['confirmation_text_body'] = $defaults['confirmation_text_body'];
+        }
+
+        return wp_parse_args( $submission, $defaults );
+    }
+
+    private function looks_like_legacy_owner_template( string $html ): bool {
+        return str_contains( $html, 'Neue Formular-Einsendung' )
+            && str_contains( $html, '{form_title}' )
+            && str_contains( $html, '{fields_table}' );
+    }
+
+    private function looks_like_legacy_confirmation_template( string $html ): bool {
+        return ( str_contains( $html, 'Vielen Dank' ) || str_contains( $html, 'Ihre Anfrage' ) )
+            && str_contains( $html, '{form_title}' )
+            && str_contains( $html, '{fields_table}' );
+    }
+
+    /**
+     * @return array<string,string>
+     */
+    private function get_mail_branding_context(): array {
+        $site_name = wp_specialchars_decode( (string) get_bloginfo( 'name' ), ENT_QUOTES );
+
+        $branding = [
+            'site_name'       => $site_name !== '' ? $site_name : 'Restatify',
+            'home_url'        => home_url( '/' ),
+            'logo_url'        => $this->get_placeholder_logo_url(),
+            'primary_color'   => '#2563eb',
+            'secondary_color' => '#0f766e',
+            'background_color'=> '#eef4ff',
+            'surface_color'   => '#ffffff',
+            'text_color'      => '#0f172a',
+            'muted_color'     => '#52607a',
+            'contrast_color'  => '#ffffff',
+        ];
+
+        if ( ! $this->is_restatify_theme_active() ) {
+            return $branding;
+        }
+
+        $branding['logo_url'] = $this->get_restatify_theme_logo_url();
+        $palette = $this->get_restatify_theme_palette();
+        $branding['primary_color'] = $palette['primary'] ?? '#ff6b00';
+        $branding['secondary_color'] = $palette['secondary'] ?? '#00c2ff';
+        $branding['background_color'] = $palette['background'] ?? '#f8fafc';
+        $branding['text_color'] = $palette['text'] ?? '#0b1221';
+        $branding['muted_color'] = '#5b6577';
+
+        return $branding;
+    }
+
+    private function is_restatify_theme_active(): bool {
+        $theme = wp_get_theme();
+        if ( ! $theme->exists() ) {
+            return false;
+        }
+
+        return in_array( 'wp_restatify-base-theme', [ $theme->get_stylesheet(), $theme->get_template() ], true );
+    }
+
+    private function get_restatify_theme_logo_url(): string {
+        $custom_logo_id = (int) get_theme_mod( 'custom_logo' );
+        if ( $custom_logo_id > 0 ) {
+            $logo_url = wp_get_attachment_image_url( $custom_logo_id, 'full' );
+            if ( is_string( $logo_url ) && $logo_url !== '' ) {
+                return $logo_url;
+            }
+        }
+
+        return $this->get_placeholder_logo_url();
+    }
+
+    /**
+     * @return array<string,string>
+     */
+    private function get_restatify_theme_palette(): array {
+        $palette = [];
+        $theme_json_path = get_template_directory() . '/theme.json';
+        if ( ! file_exists( $theme_json_path ) ) {
+            return $palette;
+        }
+
+        $content = file_get_contents( $theme_json_path );
+        if ( ! is_string( $content ) || $content === '' ) {
+            return $palette;
+        }
+
+        $decoded = json_decode( $content, true );
+        $items = is_array( $decoded['settings']['color']['palette'] ?? null ) ? $decoded['settings']['color']['palette'] : [];
+        foreach ( $items as $item ) {
+            if ( ! is_array( $item ) ) {
+                continue;
+            }
+
+            $slug = sanitize_key( (string) ( $item['slug'] ?? '' ) );
+            $color = sanitize_hex_color( (string) ( $item['color'] ?? '' ) );
+            if ( $slug === '' || $color === null ) {
+                continue;
+            }
+
+            $palette[ $slug ] = $color;
+        }
+
+        return $palette;
+    }
+
+    private function get_placeholder_logo_url(): string {
+        return plugins_url( 'assets/mail-logo-placeholder.svg', RESTATIFY_FORMS_PLUGIN_FILE );
+    }
+
+    /**
+     * @param array<string,string> $branding
+     */
+    private function build_default_html_mail( array $branding, string $eyebrow, string $headline, string $content ): string {
+        $logo_url = esc_url( $branding['logo_url'] );
+        $site_name = esc_html( $branding['site_name'] );
+        $home_url = esc_url( $branding['home_url'] );
+        $primary_color = esc_attr( $branding['primary_color'] );
+        $secondary_color = esc_attr( $branding['secondary_color'] );
+        $background_color = esc_attr( $branding['background_color'] );
+        $surface_color = esc_attr( $branding['surface_color'] );
+        $text_color = esc_attr( $branding['text_color'] );
+        $muted_color = esc_attr( $branding['muted_color'] );
+        $contrast_color = esc_attr( $branding['contrast_color'] );
+        $logo_markup = '<img src="' . $logo_url . '" alt="' . $site_name . '" style="display:block;max-width:220px;width:auto;max-height:56px;height:auto;border:0;">';
+
+        return '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0;padding:0;background:' . $background_color . ';font-family:Arial,sans-serif;color:' . $text_color . ';">'
+            . '<tr><td align="center" style="padding:32px 16px;">'
+            . '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:680px;border-collapse:collapse;background:' . $surface_color . ';border:1px solid rgba(11,18,33,0.08);border-radius:24px;overflow:hidden;box-shadow:0 18px 48px rgba(11,18,33,0.08);">'
+            . '<tr><td style="padding:28px 32px;background:linear-gradient(135deg,' . $primary_color . ' 0%,' . $secondary_color . ' 100%);color:' . $contrast_color . ';">'
+            . '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;"><tr>'
+            . '<td align="left" style="vertical-align:middle;">' . $logo_markup . '</td>'
+            . '<td align="right" style="vertical-align:middle;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;font-weight:700;opacity:0.95;">' . esc_html( $eyebrow ) . '</td>'
+            . '</tr></table>'
             . '</td></tr>'
-            . '<tr><td style="padding:28px">'
-            . '<p style="margin:0 0 14px;font-size:16px;line-height:1.65">Wir haben deine Nachricht erhalten und melden uns zeitnah bei dir.</p>'
-            . '<p style="margin:0 0 18px;font-size:14px;line-height:1.65"><strong>Formular:</strong> {form_title}<br><strong>Eingang:</strong> {date}</p>'
-            . '{fields_table}'
+            . '<tr><td style="padding:32px;">'
+            . '<h1 style="margin:0 0 20px;font-size:28px;line-height:1.2;color:' . $text_color . ';">' . esc_html( $headline ) . '</h1>'
+            . '<div style="font-size:16px;line-height:1.65;color:' . $text_color . ';">' . $content . '</div>'
             . '</td></tr>'
-            . '<tr><td style="padding:0 28px 26px">'
-            . '<div style="height:1px;background:linear-gradient(90deg,#ff6a3d 0%,#0f766e 100%);"></div>'
-            . '</td></tr>'
-            . '<tr><td style="padding:0 28px 28px;font-size:12px;line-height:1.6;color:#667085">'
-            . '<p style="margin:0 0 8px"><strong>Disclaimer:</strong> Diese Nachricht enthält organisatorische Informationen zu deiner Anfrage. Bitte sende keine sensiblen Daten per E-Mail.</p>'
-            . '<p style="margin:0 0 8px">Diese E-Mail wurde maschinell erstellt. Antworten auf diese Nachricht werden möglicherweise nicht gelesen.</p>'
-            . '<p style="margin:0 0 8px">Schütze die Umwelt, indem du diese E-Mail nicht ausdruckst.</p>'
-            . '<p style="margin:0">Service-Team · {site_name}</p>'
+            . '<tr><td style="padding:0 32px 32px;"><div style="height:1px;background:linear-gradient(90deg,' . $primary_color . ' 0%,' . $secondary_color . ' 100%);"></div></td></tr>'
+            . '<tr><td style="padding:0 32px 32px;font-size:13px;line-height:1.6;color:' . $muted_color . ';">'
+            . '<p style="margin:0 0 10px;"><strong>Disclaimer:</strong> Diese Nachricht enthält organisatorische Informationen zu deiner Anfrage. Bitte sende keine sensiblen Daten per E-Mail.</p>'
+            . '<p style="margin:0 0 10px;">Diese E-Mail wurde maschinell erstellt. Antworten auf diese Nachricht werden möglicherweise nicht gelesen.</p>'
+            . '<p style="margin:0 0 10px;">Schütze die Umwelt, indem du diese E-Mail nicht ausdruckst.</p>'
+            . '<p style="margin:0;">' . $site_name . ' · <a href="' . $home_url . '" style="color:' . $primary_color . ';text-decoration:none;">' . $home_url . '</a></p>'
             . '</td></tr>'
             . '</table>'
             . '</td></tr>'
