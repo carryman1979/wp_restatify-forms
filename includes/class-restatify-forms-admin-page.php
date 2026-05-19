@@ -331,6 +331,12 @@ final class Restatify_Forms_Admin_Page {
                                 <input type="password" id="rsfm-turnstile-secret-key" class="large-text" data-bind-security="turnstile_secret_key" autocomplete="new-password">
                             </div>
                         </div>
+
+                        <div class="rsfm-field-row">
+                            <label class="rsfm-field-label" for="rsfm-privacy-policy-url"><?php esc_html_e( 'URL zur Datenschutzerklärung', Restatify_Forms_Constants::TEXT_DOMAIN ); ?></label>
+                            <input type="url" id="rsfm-privacy-policy-url" class="large-text code" data-bind-security="privacy_policy_url" placeholder="https://example.com/datenschutz">
+                            <p class="description"><?php esc_html_e( 'Wird als Link im Legal-Hinweis unter dem Formular angezeigt.', Restatify_Forms_Constants::TEXT_DOMAIN ); ?></p>
+                        </div>
                     </div>
                 </div>
 
@@ -365,9 +371,10 @@ final class Restatify_Forms_Admin_Page {
                             <div class="rsfm-field-row">
                                 <div class="rsfm-template-editor">
                                     <div class="rsfm-template-tabs" data-rsfm-template-tabs>
-                                        <button type="button" class="button button-secondary is-active" data-rsfm-tab="owner" data-rsfm-panel="html"><?php esc_html_e( 'HTML', Restatify_Forms_Constants::TEXT_DOMAIN ); ?></button>
+                                        <button type="button" class="button button-secondary is-active" data-rsfm-tab="owner" data-rsfm-panel="html"><?php esc_html_e( 'Visuell', Restatify_Forms_Constants::TEXT_DOMAIN ); ?></button>
                                         <button type="button" class="button button-secondary" data-rsfm-tab="owner" data-rsfm-panel="code"><?php esc_html_e( 'Code', Restatify_Forms_Constants::TEXT_DOMAIN ); ?></button>
                                         <button type="button" class="button button-secondary" data-rsfm-tab="owner" data-rsfm-panel="text"><?php esc_html_e( 'Text', Restatify_Forms_Constants::TEXT_DOMAIN ); ?></button>
+                                        <button type="button" class="button button-secondary" data-rsfm-reset-template="owner"><?php esc_html_e( 'Reset', Restatify_Forms_Constants::TEXT_DOMAIN ); ?></button>
                                     </div>
                                     <div class="rsfm-template-panel is-active" data-rsfm-tab-panel="owner" data-rsfm-panel="html">
                                         <div class="rsfm-template-placeholders">
@@ -419,9 +426,10 @@ final class Restatify_Forms_Admin_Page {
                                 <div class="rsfm-field-row">
                                     <div class="rsfm-template-editor">
                                         <div class="rsfm-template-tabs" data-rsfm-template-tabs>
-                                            <button type="button" class="button button-secondary is-active" data-rsfm-tab="confirmation" data-rsfm-panel="html"><?php esc_html_e( 'HTML', Restatify_Forms_Constants::TEXT_DOMAIN ); ?></button>
+                                            <button type="button" class="button button-secondary is-active" data-rsfm-tab="confirmation" data-rsfm-panel="html"><?php esc_html_e( 'Visuell', Restatify_Forms_Constants::TEXT_DOMAIN ); ?></button>
                                             <button type="button" class="button button-secondary" data-rsfm-tab="confirmation" data-rsfm-panel="code"><?php esc_html_e( 'Code', Restatify_Forms_Constants::TEXT_DOMAIN ); ?></button>
                                             <button type="button" class="button button-secondary" data-rsfm-tab="confirmation" data-rsfm-panel="text"><?php esc_html_e( 'Text', Restatify_Forms_Constants::TEXT_DOMAIN ); ?></button>
+                                            <button type="button" class="button button-secondary" data-rsfm-reset-template="confirmation"><?php esc_html_e( 'Reset', Restatify_Forms_Constants::TEXT_DOMAIN ); ?></button>
                                         </div>
                                         <div class="rsfm-template-panel is-active" data-rsfm-tab-panel="confirmation" data-rsfm-panel="html">
                                             <div class="rsfm-template-placeholders">

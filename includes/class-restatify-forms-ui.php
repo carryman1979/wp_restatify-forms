@@ -213,6 +213,10 @@ final class Restatify_Forms_UI {
             ? ( $form['security']['recaptcha_site_key'] ?? '' )
             : ( $form['security']['turnstile_site_key'] ?? '' );
         $captcha   = '';
+        $privacy_policy_url = (string) ( $form['security']['privacy_policy_url'] ?? '' );
+        if ( $privacy_policy_url === '' && function_exists( 'get_privacy_policy_url' ) ) {
+            $privacy_policy_url = (string) get_privacy_policy_url();
+        }
 
         if ( $provider === 'turnstile' && $site_key !== '' ) {
             $captcha = '<div class="rsfm-captcha"><div class="cf-turnstile" data-sitekey="' . esc_attr( $site_key ) . '"></div></div>';
@@ -239,6 +243,15 @@ final class Restatify_Forms_UI {
         $title_html    = $title !== '' ? "<h2 class=\"rsfm-dialog__title\" id=\"rsfm-title-{$id}\">{$title}</h2>" : '';
         $subtitle_html = $subtitle !== '' ? "<p class=\"rsfm-dialog__subtitle\">{$subtitle}</p>" : '';
         $text_html     = $text !== '' ? "<div class=\"rsfm-dialog__text\">{$text}</div>" : '';
+        $legal_html    = '';
+        if ( $privacy_policy_url !== '' ) {
+            $legal_html = sprintf(
+                '<p class="rsfm-legal-notice">%s <a href="%s" target="_blank" rel="noopener noreferrer">%s</a>.</p>',
+                esc_html__( 'Mit der Nutzung dieses Formulars stimmst du unseren Datenschutzbestimmungen zu.', Restatify_Forms_Constants::TEXT_DOMAIN ),
+                esc_url( $privacy_policy_url ),
+                esc_html__( 'Datenschutzerklärung', Restatify_Forms_Constants::TEXT_DOMAIN )
+            );
+        }
 
         return <<<HTML
 <div class="rsfm-popup" id="rsfm-popup-{$id}" data-form-id="{$id}" role="dialog" aria-modal="true" aria-labelledby="rsfm-title-{$id}" hidden>
@@ -259,6 +272,7 @@ final class Restatify_Forms_UI {
           <button type="submit" class="rsfm-btn rsfm-btn--primary rsfm-submit">{$submit_label}</button>
         </div>
       </form>
+            {$legal_html}
     </div>
   </div>
 </div>

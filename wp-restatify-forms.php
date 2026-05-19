@@ -14,13 +14,28 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'RESTATIFY_FORMS_PLUGIN_FILE', __FILE__ );
-define( 'RESTATIFY_FORMS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
-define( 'RESTATIFY_FORMS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'RESTATIFY_FORMS_VERSION', '1.0.4' );
+if ( ! defined( 'RESTATIFY_FORMS_PLUGIN_FILE' ) ) {
+    define( 'RESTATIFY_FORMS_PLUGIN_FILE', __FILE__ );
+}
+
+if ( ! defined( 'RESTATIFY_FORMS_PLUGIN_DIR' ) ) {
+    define( 'RESTATIFY_FORMS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+}
+
+if ( ! defined( 'RESTATIFY_FORMS_PLUGIN_URL' ) ) {
+    define( 'RESTATIFY_FORMS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+}
+
+if ( ! defined( 'RESTATIFY_FORMS_VERSION' ) ) {
+    define( 'RESTATIFY_FORMS_VERSION', '1.0.4' );
+}
 
 if ( ! defined( 'RESTATIFY_FORMS_SHARED_VERSION' ) ) {
     define( 'RESTATIFY_FORMS_SHARED_VERSION', '1.0.0' );
+}
+
+if ( class_exists( 'Restatify_Forms_Plugin', false ) ) {
+    return;
 }
 
 $restatify_forms_require_all = static function ( array $paths ): void {

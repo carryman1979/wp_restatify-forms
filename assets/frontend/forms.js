@@ -24,8 +24,6 @@
         ensureAttributionUi();
         document.addEventListener('click', handleLinkClick);
         document.addEventListener('keydown', handleEsc);
-        document.addEventListener('focusin', handleFieldFocusState, true);
-        document.addEventListener('focusout', handleFieldFocusState, true);
         window.addEventListener('hashchange', handleLocationHash);
 
         // Support direct navigation to a form hash.
@@ -137,30 +135,6 @@
         attributionEl.hidden = true;
     }
 
-    function handleFieldFocusState() {
-        window.setTimeout(function () {
-            var active = document.activeElement;
-            if (!active || !active.closest) {
-                hideAttribution();
-                return;
-            }
-
-            var popup = active.closest('.rsfm-popup:not([hidden])');
-            if (!popup) {
-                hideAttribution();
-                return;
-            }
-
-            var isFormField = active.matches('input:not([type="hidden"]), textarea, select');
-            if (!isFormField) {
-                hideAttribution();
-                return;
-            }
-
-            setAttributionForPopup(popup);
-        }, 0);
-    }
-
     // -------------------------------------------------------------------------
     // Link click handler
     // -------------------------------------------------------------------------
@@ -197,6 +171,7 @@
         resetForm(popup);
         popup.hidden = false;
         document.body.style.overflow = 'hidden';
+        setAttributionForPopup(popup);
 
         // Set nonce fresh on open
         var nonceInput = popup.querySelector('input[name="_nonce"]');
@@ -245,6 +220,21 @@
         setStatus(popup, '', '');
         setSubmitEnabled(popup, true);
         form.classList.remove('is-submitted');
+
+        // Re-open must fully restore UI after previous success state hid controls.
+        form.querySelectorAll('.rsfm-form__actions').forEach(function (a) { a.style.display = ''; });
+        form.querySelectorAll('.rsfm-field').forEach(function (f) { f.style.display = ''; });
+
+        // A completed Turnstile token is single-use. Ensure a fresh challenge on reopen.
+        if (window.turnstile && typeof window.turnstile.reset === 'function') {
+            form.querySelectorAll('.cf-turnstile').forEach(function (widget) {
+                try {
+                    window.turnstile.reset(widget);
+                } catch (e) {
+                    // Ignore widget reset errors; submit flow still handles missing token safely.
+                }
+            });
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -557,6 +547,29 @@
     // CAPTCHA token acquisition
     // -------------------------------------------------------------------------
 
+    function waitForTurnstileToken(formId, timeoutMs) {
+        return new Promise(function (resolve) {
+            var started = Date.now();
+
+            var check = function () {
+                var response = document.querySelector('#rsfm-popup-' + formId + ' [name="cf-turnstile-response"]');
+                if (response && response.value) {
+                    resolve(response.value);
+                    return;
+                }
+
+                if ((Date.now() - started) >= timeoutMs) {
+                    resolve('');
+                    return;
+                }
+
+                window.setTimeout(check, 120);
+            };
+
+            check();
+        });
+    }
+
     function getCaptchaToken(security, formId) {
         var provider = security.captcha_provider || 'none';
 
@@ -569,8 +582,8 @@
             if (response && response.value) {
                 return Promise.resolve(response.value);
             }
-            // Token not yet available (widget may still be loading)
-            return Promise.resolve('');
+            // Widget may still be booting/rendering.
+            return waitForTurnstileToken(formId, 2200);
         }
 
         return Promise.resolve('');
