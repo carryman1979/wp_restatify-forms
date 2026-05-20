@@ -1,12 +1,4 @@
-# Restatify Forms - Wiki (DE)
-
-Produktname: Restatify-Forms  
-WordPress-Slug: wp-restatify-forms  
-Website: https://www.restatify.tech
-
-Diese Seite ist der Einstieg in die Forms-Dokumentation fuer Betrieb, Releases und Website-Kommunikation.
-
-## Inhalte
+## Restatify Forms
 
 - [Home](Home)
 - [Schnellstart](Schnellstart)
