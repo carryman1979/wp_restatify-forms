@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Restatify Forms
  * Description: Multi-form popup builder with configurable fields, email templates and custom endpoint forwarding.
- * Version: 1.0.4
+ * Version: 1.0.5
  * Author: Restatify
  * License: GPL-2.0-or-later
  * Requires at least: 6.9
@@ -27,7 +27,7 @@ if ( ! defined( 'RESTATIFY_FORMS_PLUGIN_URL' ) ) {
 }
 
 if ( ! defined( 'RESTATIFY_FORMS_VERSION' ) ) {
-    define( 'RESTATIFY_FORMS_VERSION', '1.0.4' );
+    define( 'RESTATIFY_FORMS_VERSION', '1.0.5' );
 }
 
 if ( ! defined( 'RESTATIFY_FORMS_SHARED_VERSION' ) ) {
@@ -53,8 +53,13 @@ $restatify_forms_require_all(
         dirname( RESTATIFY_FORMS_PLUGIN_DIR, 3 ) . '/wp_restatify-shared/src/php/Mail/MailDispatcher.php',
         dirname( RESTATIFY_FORMS_PLUGIN_DIR, 3 ) . '/wp_restatify-shared/src/php/Mail/PlaceholderCatalog.php',
         dirname( RESTATIFY_FORMS_PLUGIN_DIR, 3 ) . '/wp_restatify-shared/src/php/I18n/PolylangAdapter.php',
+        dirname( RESTATIFY_FORMS_PLUGIN_DIR, 3 ) . '/wp_restatify-shared/src/php/Util/PrivacyLegalNotice.php',
     ]
 );
+
+if ( ! class_exists( '\\Restatify\\Shared\\Util\\PrivacyLegalNotice', false ) ) {
+    throw new RuntimeException( 'Missing required shared dependency: wp_restatify-shared/src/php/Util/PrivacyLegalNotice.php' );
+}
 
 require_once RESTATIFY_FORMS_PLUGIN_DIR . 'includes/class-restatify-forms-constants.php';
 require_once RESTATIFY_FORMS_PLUGIN_DIR . 'includes/class-restatify-forms-options.php';

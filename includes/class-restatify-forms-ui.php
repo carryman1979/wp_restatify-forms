@@ -243,15 +243,8 @@ final class Restatify_Forms_UI {
         $title_html    = $title !== '' ? "<h2 class=\"rsfm-dialog__title\" id=\"rsfm-title-{$id}\">{$title}</h2>" : '';
         $subtitle_html = $subtitle !== '' ? "<p class=\"rsfm-dialog__subtitle\">{$subtitle}</p>" : '';
         $text_html     = $text !== '' ? "<div class=\"rsfm-dialog__text\">{$text}</div>" : '';
-        $legal_html    = '';
-        if ( $privacy_policy_url !== '' ) {
-            $legal_html = sprintf(
-                '<p class="rsfm-legal-notice">%s <a href="%s" target="_blank" rel="noopener noreferrer">%s</a>.</p>',
-                esc_html__( 'Mit der Nutzung dieses Formulars stimmst du unseren Datenschutzbestimmungen zu.', Restatify_Forms_Constants::TEXT_DOMAIN ),
-                esc_url( $privacy_policy_url ),
-                esc_html__( 'Datenschutzerklärung', Restatify_Forms_Constants::TEXT_DOMAIN )
-            );
-        }
+        $privacy_legal_notice_class = '\\Restatify\\Shared\\Util\\PrivacyLegalNotice';
+        $legal_html = $privacy_legal_notice_class::renderDefault( $privacy_policy_url, 'rsfm-legal-notice' );
 
         return <<<HTML
 <div class="rsfm-popup" id="rsfm-popup-{$id}" data-form-id="{$id}" role="dialog" aria-modal="true" aria-labelledby="rsfm-title-{$id}" hidden>
