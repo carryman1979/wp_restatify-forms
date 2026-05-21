@@ -100,6 +100,11 @@ final class Restatify_Forms_Options {
         foreach ( $this->get_all_forms() as $form ) {
             $this->register_form_polylang_strings( $form );
         }
+
+        if ( class_exists( '\\Restatify\\Shared\\Util\\PrivacyLegalNotice', false ) ) {
+            $privacy_legal_notice_class = '\\Restatify\\Shared\\Util\\PrivacyLegalNotice';
+            $privacy_legal_notice_class::registerPolylangStrings();
+        }
     }
 
     /**
