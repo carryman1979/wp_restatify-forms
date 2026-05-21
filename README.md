@@ -104,6 +104,12 @@ See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ## Changelog
 
+### 1.0.5
+
+- Hotfix rebuild without version bump: replaced defective 1.0.5 release package.
+- Added shared library installer/runtime resolver for versioned central shared path handling.
+- Added packaged shared install payload in release ZIP to ensure `PrivacyLegalNotice` is available during install/update.
+
 ### 1.0.4
 
 - Added JS and PHP unit test baseline for trigger/link handling and picker compatibility.

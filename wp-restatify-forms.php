@@ -31,33 +31,41 @@ if ( ! defined( 'RESTATIFY_FORMS_VERSION' ) ) {
 }
 
 if ( ! defined( 'RESTATIFY_FORMS_SHARED_VERSION' ) ) {
-    define( 'RESTATIFY_FORMS_SHARED_VERSION', '1.0.0' );
+    define( 'RESTATIFY_FORMS_SHARED_VERSION', '1.0.2' );
 }
 
 if ( class_exists( 'Restatify_Forms_Plugin', false ) ) {
     return;
 }
 
-$restatify_forms_require_all = static function ( array $paths ): void {
-    foreach ( $paths as $path ) {
-        if ( is_string( $path ) && $path !== '' && file_exists( $path ) ) {
-            require_once $path;
+require_once RESTATIFY_FORMS_PLUGIN_DIR . 'includes/class-restatify-forms-shared-library.php';
+
+$restatify_forms_shared_root = restatify_forms_shared_bootstrap();
+
+$restatify_forms_require_all = static function ( string $shared_root, array $relative_paths ): bool {
+    foreach ( $relative_paths as $relative_path ) {
+        $full_path = $shared_root . '/src/php/' . ltrim( (string) $relative_path, '/' );
+        if ( ! file_exists( $full_path ) ) {
+            return false;
         }
+
+        require_once $full_path;
     }
+
+    return true;
 };
 
-$restatify_forms_require_all(
+if ( ! $restatify_forms_require_all(
+    $restatify_forms_shared_root,
     [
-        dirname( RESTATIFY_FORMS_PLUGIN_DIR, 3 ) . '/wp_restatify-shared/src/php/SharedRegistry.php',
-        dirname( RESTATIFY_FORMS_PLUGIN_DIR, 3 ) . '/wp_restatify-shared/src/php/Util/TokenReplacer.php',
-        dirname( RESTATIFY_FORMS_PLUGIN_DIR, 3 ) . '/wp_restatify-shared/src/php/Mail/MailDispatcher.php',
-        dirname( RESTATIFY_FORMS_PLUGIN_DIR, 3 ) . '/wp_restatify-shared/src/php/Mail/PlaceholderCatalog.php',
-        dirname( RESTATIFY_FORMS_PLUGIN_DIR, 3 ) . '/wp_restatify-shared/src/php/I18n/PolylangAdapter.php',
-        dirname( RESTATIFY_FORMS_PLUGIN_DIR, 3 ) . '/wp_restatify-shared/src/php/Util/PrivacyLegalNotice.php',
+        'SharedRegistry.php',
+        'Util/TokenReplacer.php',
+        'Mail/MailDispatcher.php',
+        'Mail/PlaceholderCatalog.php',
+        'I18n/PolylangAdapter.php',
+        'Util/PrivacyLegalNotice.php',
     ]
-);
-
-if ( ! class_exists( '\\Restatify\\Shared\\Util\\PrivacyLegalNotice', false ) ) {
+) ) {
     throw new RuntimeException( 'Missing required shared dependency: wp_restatify-shared/src/php/Util/PrivacyLegalNotice.php' );
 }
 
