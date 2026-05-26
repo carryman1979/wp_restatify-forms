@@ -8,6 +8,7 @@ Repo-specific requirements:
 - Keep absolute URL + hash trigger support.
 - Keep link picker entries compatible via url and permalink fields.
 - Do not silently swallow mail send failures.
+- Keep shared loader order stable: local root shared first for dev, otherwise exact versioned shared under plugins/mu-plugins, never mixed in one request.
 
 Required checks:
 - npm run test:unit:js -- --runInBand

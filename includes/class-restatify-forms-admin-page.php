@@ -33,8 +33,14 @@ final class Restatify_Forms_Admin_Page {
 
         $base_url  = RESTATIFY_FORMS_PLUGIN_URL . 'assets/admin/';
         $base_path = RESTATIFY_FORMS_PLUGIN_DIR . 'assets/admin/';
-        $shared_js_path = ABSPATH . 'wp_restatify-shared/src/js/mail-template-editor.js';
-        $shared_js_url  = home_url( '/wp_restatify-shared/src/js/mail-template-editor.js' );
+        $shared_base_path = defined( 'RESTATIFY_FORMS_SHARED_BASE_PATH' ) && is_string( RESTATIFY_FORMS_SHARED_BASE_PATH ) && RESTATIFY_FORMS_SHARED_BASE_PATH !== ''
+            ? RESTATIFY_FORMS_SHARED_BASE_PATH
+            : ABSPATH . 'wp_restatify-shared';
+        $shared_base_url = defined( 'RESTATIFY_FORMS_SHARED_BASE_URL' ) && is_string( RESTATIFY_FORMS_SHARED_BASE_URL ) && RESTATIFY_FORMS_SHARED_BASE_URL !== ''
+            ? RESTATIFY_FORMS_SHARED_BASE_URL
+            : home_url( '/wp_restatify-shared' );
+        $shared_js_path = rtrim( $shared_base_path, '/' ) . '/src/js/mail-template-editor.js';
+        $shared_js_url  = rtrim( $shared_base_url, '/' ) . '/src/js/mail-template-editor.js';
 
         wp_enqueue_script(
             'restatify-shared-mail-template-editor',
