@@ -34,21 +34,35 @@ if ( ! defined( 'RESTATIFY_FORMS_SHARED_VERSION' ) ) {
     define( 'RESTATIFY_FORMS_SHARED_VERSION', '1.0.2' );
 }
 
+require_once RESTATIFY_FORMS_PLUGIN_DIR . 'includes/class-restatify-forms-shared-library.php';
+
 if ( class_exists( 'Restatify_Forms_Plugin', false ) ) {
     return;
 }
 
-$restatify_forms_require_all = static function ( array $paths ): void {
+$restatify_forms_require_first = static function ( array $paths ): bool {
     foreach ( $paths as $path ) {
         if ( is_string( $path ) && $path !== '' && file_exists( $path ) ) {
             require_once $path;
+            return true;
         }
     }
+
+    return false;
 };
 
 $restatify_forms_local_shared_root = dirname( RESTATIFY_FORMS_PLUGIN_DIR, 3 ) . '/wp_restatify-shared';
 $restatify_forms_use_local_latest_shared = is_dir( $restatify_forms_local_shared_root . '/src/php' );
 $restatify_forms_versioned_shared_roots = [];
+$restatify_forms_bootstrapped_shared_base = '';
+$restatify_forms_packaged_version_root = rtrim( RESTATIFY_FORMS_PLUGIN_DIR, '/' )
+    . '/shared-install/wp_restatify-shared/versions/'
+    . RESTATIFY_FORMS_SHARED_VERSION;
+$restatify_forms_packaged_legacy_root = rtrim( RESTATIFY_FORMS_PLUGIN_DIR, '/' ) . '/shared-install/wp_restatify-shared';
+
+if ( function_exists( 'restatify_forms_shared_bootstrap' ) ) {
+    $restatify_forms_bootstrapped_shared_base = (string) restatify_forms_shared_bootstrap();
+}
 
 if ( $restatify_forms_use_local_latest_shared ) {
     $restatify_forms_shared_base_path = $restatify_forms_local_shared_root;
@@ -104,12 +118,30 @@ if ( ! defined( 'RESTATIFY_FORMS_SHARED_BASE_URL' ) ) {
     define( 'RESTATIFY_FORMS_SHARED_BASE_URL', $restatify_forms_shared_base_url );
 }
 
-$restatify_forms_shared_candidates = static function ( string $relative_path ) use ( $restatify_forms_shared_base_path ): array {
-    if ( ! is_string( $restatify_forms_shared_base_path ) || $restatify_forms_shared_base_path === '' ) {
-        return [];
+$restatify_forms_shared_candidates = static function ( string $relative_path ) use (
+    $restatify_forms_shared_base_path,
+    $restatify_forms_bootstrapped_shared_base,
+    $restatify_forms_packaged_version_root,
+    $restatify_forms_packaged_legacy_root
+): array {
+    $relative_path = ltrim( $relative_path, '/' );
+    $paths = [];
+
+    if ( is_string( $restatify_forms_bootstrapped_shared_base ) && $restatify_forms_bootstrapped_shared_base !== '' ) {
+        $paths[] = rtrim( $restatify_forms_bootstrapped_shared_base, '/' ) . '/' . $relative_path;
     }
 
-    return [ rtrim( $restatify_forms_shared_base_path, '/' ) . '/' . ltrim( $relative_path, '/' ) ];
+    if ( ! is_string( $restatify_forms_shared_base_path ) || $restatify_forms_shared_base_path === '' ) {
+        $paths[] = rtrim( $restatify_forms_packaged_version_root, '/' ) . '/' . $relative_path;
+        $paths[] = rtrim( $restatify_forms_packaged_legacy_root, '/' ) . '/' . $relative_path;
+        return array_values( array_unique( $paths ) );
+    }
+
+    $paths[] = rtrim( $restatify_forms_shared_base_path, '/' ) . '/' . $relative_path;
+    $paths[] = rtrim( $restatify_forms_packaged_version_root, '/' ) . '/' . $relative_path;
+    $paths[] = rtrim( $restatify_forms_packaged_legacy_root, '/' ) . '/' . $relative_path;
+
+    return array_values( array_unique( $paths ) );
 };
 
 $restatify_forms_symbol_exists = static function ( string $symbol ): bool {
@@ -123,7 +155,7 @@ $restatify_forms_symbol_exists = static function ( string $symbol ): bool {
 };
 
 $restatify_forms_require_shared = static function ( string $relative_path, string $symbol = '' ) use (
-    $restatify_forms_require_all,
+    $restatify_forms_require_first,
     $restatify_forms_shared_candidates,
     $restatify_forms_symbol_exists
 ): bool {
@@ -131,13 +163,13 @@ $restatify_forms_require_shared = static function ( string $relative_path, strin
         return true;
     }
 
-    $restatify_forms_require_all( $restatify_forms_shared_candidates( $relative_path ) );
+    $required = $restatify_forms_require_first( $restatify_forms_shared_candidates( $relative_path ) );
 
     if ( $symbol !== '' ) {
         return $restatify_forms_symbol_exists( $symbol );
     }
 
-    return true;
+    return $required;
 };
 
 $restatify_forms_require_shared( 'src/php/SharedRegistry.php', '\\Restatify\\Shared\\SharedRegistry' );
