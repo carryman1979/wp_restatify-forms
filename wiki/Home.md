@@ -29,6 +29,12 @@ Restatify Forms ist ein WordPress-Plugin fuer mehrstufige, conversion-orientiert
 - Shared-Komponenten werden ab Migration 2.0.0 versionsgenau geladen.
 - Vor groesseren Updates immer Backup und kurzen Smoke-Test einplanen.
 
+## Release-Prep Status (2026-05-30)
+
+- Dokumentation fuer den aktuellen 1.0.6-Stand ohne Versionssprung synchronisiert.
+- UI-/Versand-/Admin-Refactorings und Dark-Theme-nahe Styling-Korrekturen fuer den Rollout gebuendelt.
+- Release-Notizen und Test-Baseline fuer den koordinierten Multi-Repo-Run aktualisiert.
+
 ## Wichtige Seiten
 
 - [Schnellstart](Schnellstart)
@@ -38,6 +44,7 @@ Restatify Forms ist ein WordPress-Plugin fuer mehrstufige, conversion-orientiert
 
 ## Releases
 
+- [Release 1.0.6](Release-1.0.6)
 - [Release 1.0.5](Release-1.0.5)
 - [Release 1.0.4](Release-1.0.4)
 - [Release 1.0.1](Release-1.0.1)

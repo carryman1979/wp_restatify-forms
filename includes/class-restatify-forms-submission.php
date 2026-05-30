@@ -163,7 +163,7 @@ final class Restatify_Forms_Submission {
         }
 
         if ( ! str_contains( $value, '@' ) ) {
-            return __( 'Bitte gib eine gültige E-Mail-Adresse ein.', Restatify_Forms_Constants::TEXT_DOMAIN );
+            return $this->invalid_email_message();
         }
 
         if ( $mode === 'simple' ) {
@@ -171,7 +171,7 @@ final class Restatify_Forms_Submission {
         }
 
         if ( ! is_email( $value ) ) {
-            return __( 'Bitte gib eine gültige E-Mail-Adresse ein.', Restatify_Forms_Constants::TEXT_DOMAIN );
+            return $this->invalid_email_message();
         }
 
         if ( $mode === 'regex' ) {
@@ -184,7 +184,7 @@ final class Restatify_Forms_Submission {
             $domain = $at_pos !== false ? substr( $value, $at_pos + 1 ) : '';
 
             if ( $domain === '' ) {
-                return __( 'Bitte gib eine gültige E-Mail-Adresse ein.', Restatify_Forms_Constants::TEXT_DOMAIN );
+                return $this->invalid_email_message();
             }
 
             if ( ! checkdnsrr( $domain, 'MX' ) && ! checkdnsrr( $domain, 'A' ) ) {
@@ -202,7 +202,7 @@ final class Restatify_Forms_Submission {
 
         // Simple: plausible phone characters and minimum length.
         if ( ! preg_match( '/^[\d\s\+\-\(\)\.\/]{6,}$/', $value ) ) {
-            return __( 'Bitte gib eine gültige Telefonnummer ein.', Restatify_Forms_Constants::TEXT_DOMAIN );
+            return $this->invalid_tel_message();
         }
 
         if ( $mode === 'simple' ) {
@@ -216,6 +216,14 @@ final class Restatify_Forms_Submission {
         }
 
         return '';
+    }
+
+    private function invalid_email_message(): string {
+        return __( 'Bitte gib eine gültige E-Mail-Adresse ein.', Restatify_Forms_Constants::TEXT_DOMAIN );
+    }
+
+    private function invalid_tel_message(): string {
+        return __( 'Bitte gib eine gültige Telefonnummer ein.', Restatify_Forms_Constants::TEXT_DOMAIN );
     }
 
     // -------------------------------------------------------------------------

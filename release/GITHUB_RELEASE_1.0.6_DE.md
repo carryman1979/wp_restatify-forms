@@ -7,6 +7,12 @@
 - Admin-Mail-Template-Editor nutzt aufgeloeste Shared-Base-URL und Shared-Base-Path.
 - Copilot-Repo-Richtlinie zur Shared-Loader-Reihenfolge aufgenommen.
 
+## Release-Prep-Refresh (2026-05-30)
+
+- Kein Versionssprung: Release-Prep verbleibt auf `1.0.6`.
+- Admin-/Frontend-Look-and-Feel-Anpassungen (inkl. Dark-Theme-Feinschliff) konsolidiert.
+- Mail-Editor-Helper sowie Submission-/UI-Refactoring-Pfade und Tests fuer den Rollout synchronisiert.
+
 ## Kompatibilitaet
 
 - Plugin-Version: `1.0.6`

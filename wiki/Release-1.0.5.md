@@ -8,6 +8,8 @@ Version 1.0.5 bringt den Forms-Plugin-Stand auf den naechsten patch-level inklus
 - npm-Package-Version auf `1.0.5` aktualisiert
 - README sowie Wiki-Release-Links auf den neuen Stand angehoben
 - Release-Workflow-Dokumentation fuer den aktuellen Zyklus synchronisiert
+- Hotfix-Rebuild ohne Versionssprung: bestehendes `1.0.5`-Artefakt ersetzt
+- Legal-Notice-Abhaengigkeit wird jetzt ueber zentrale, versionsgebundene Shared-Installation abgesichert
 
 ## Kompatibilitaet
 
