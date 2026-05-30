@@ -29,11 +29,28 @@ final class Restatify_Forms_UI {
 
         $base_url  = RESTATIFY_FORMS_PLUGIN_URL . 'assets/frontend/';
         $base_path = RESTATIFY_FORMS_PLUGIN_DIR . 'assets/frontend/';
+        $shared_overlay_path = defined( 'RESTATIFY_FORMS_SHARED_BASE_PATH' )
+            ? rtrim( (string) RESTATIFY_FORMS_SHARED_BASE_PATH, '/' ) . '/src/css/overlay-window.css'
+            : '';
+        $shared_overlay_url = defined( 'RESTATIFY_FORMS_SHARED_BASE_URL' )
+            ? rtrim( (string) RESTATIFY_FORMS_SHARED_BASE_URL, '/' ) . '/src/css/overlay-window.css'
+            : '';
+        $frontend_style_deps = [];
+
+        if ( $shared_overlay_path !== '' && $shared_overlay_url !== '' && file_exists( $shared_overlay_path ) ) {
+            wp_enqueue_style(
+                'restatify-shared-overlay-window',
+                $shared_overlay_url,
+                [],
+                (string) filemtime( $shared_overlay_path )
+            );
+            $frontend_style_deps[] = 'restatify-shared-overlay-window';
+        }
 
         wp_enqueue_style(
             'wp-restatify-forms',
             $base_url . 'forms.css',
-            [],
+            $frontend_style_deps,
             file_exists( $base_path . 'forms.css' )
                 ? (string) filemtime( $base_path . 'forms.css' )
                 : RESTATIFY_FORMS_VERSION
@@ -250,9 +267,11 @@ final class Restatify_Forms_UI {
 <div class="rsfm-popup" id="rsfm-popup-{$id}" data-form-id="{$id}" role="dialog" aria-modal="true" aria-labelledby="rsfm-title-{$id}" hidden>
   <div class="rsfm-overlay" data-rsfm-close></div>
   <div class="rsfm-dialog">
-    <button class="rsfm-close" type="button" aria-label="{$close_label}" data-rsfm-close>&#215;</button>
     <div class="rsfm-dialog__inner">
-      {$title_html}
+            <div class="rsfm-dialog__header">
+                {$title_html}
+                <button class="rsfm-close" type="button" aria-label="{$close_label}" data-rsfm-close>&#215;</button>
+            </div>
       {$subtitle_html}
       {$text_html}
       <div class="rsfm-status" role="status" aria-live="polite" aria-atomic="true"></div>

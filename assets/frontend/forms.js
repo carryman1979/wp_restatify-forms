@@ -25,9 +25,33 @@
         document.addEventListener('click', handleLinkClick);
         document.addEventListener('keydown', handleEsc);
         window.addEventListener('hashchange', handleLocationHash);
+        document.addEventListener('restatify:form-open', handleExternalFormOpen);
 
         // Support direct navigation to a form hash.
         handleLocationHash();
+    }
+
+    function handleExternalFormOpen(event) {
+        var detail = event && event.detail && typeof event.detail === 'object' ? event.detail : {};
+        var formId = String(detail.formId || '').trim();
+        var prefill = detail.prefill && typeof detail.prefill === 'object' ? detail.prefill : {};
+
+        if (!formId && forms.length > 0 && forms[0] && forms[0].id) {
+            formId = String(forms[0].id);
+        }
+
+        if (!formId) {
+            return;
+        }
+
+        openPopup(formId);
+        if (prefill && Object.keys(prefill).length > 0) {
+            window.setTimeout(function () {
+                var popup = document.getElementById('rsfm-popup-' + formId);
+                if (!popup) { return; }
+                applyPrefillToPopup(popup, prefill);
+            }, 80);
+        }
     }
 
     function handleLocationHash() {
@@ -190,6 +214,77 @@
 
         // Validate initially (to set submit button state)
         validateAll(popup);
+    }
+
+    function applyPrefillToPopup(popup, prefill) {
+        if (!popup || !prefill || typeof prefill !== 'object') { return; }
+
+        var form = popup.querySelector('.rsfm-form');
+        if (!form) { return; }
+
+        var wrappers = form.querySelectorAll('[data-field-id]');
+        wrappers.forEach(function (fieldWrap) {
+            var fid = String(fieldWrap.dataset.fieldId || '');
+            if (!fid) { return; }
+
+            var input = form.querySelector('#rsfm-field-' + fid);
+            if (!input || input.disabled) { return; }
+
+            var value = pickPrefillValue(prefill, fieldWrap, input, fid);
+            if (typeof value !== 'string' || value.trim() === '') { return; }
+
+            input.value = value.trim();
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+
+        validateAll(popup);
+    }
+
+    function pickPrefillValue(prefill, fieldWrap, input, fid) {
+        var idHint = normalizeFieldHint(fid);
+        var labelEl = fieldWrap.querySelector('.rsfm-label');
+        var labelHint = normalizeFieldHint(labelEl ? labelEl.textContent : '');
+        var placeholderHint = normalizeFieldHint(input.getAttribute('placeholder') || '');
+        var allHints = idHint + ' ' + labelHint + ' ' + placeholderHint;
+        var type = String(input.type || '').toLowerCase();
+
+        if (type === 'email' || hasAnyHint(allHints, ['email', 'e-mail', 'mail'])) {
+            return String(prefill.email || '');
+        }
+
+        if (type === 'tel' || hasAnyHint(allHints, ['telefon', 'phone', 'tel', 'mobile', 'mobil', 'whatsapp'])) {
+            return String(prefill.phone || prefill.contact_value || '');
+        }
+
+        if (type === 'textarea' || input.tagName === 'TEXTAREA' || hasAnyHint(allHints, ['nachricht', 'message', 'anliegen', 'beschreibung', 'details', 'note'])) {
+            return String(prefill.message || prefill.note || '');
+        }
+
+        if (hasAnyHint(allHints, ['name', 'fullname', 'full name', 'vorname', 'nachname'])) {
+            return String(prefill.name || '');
+        }
+
+        if (hasAnyHint(allHints, ['betreff', 'subject', 'titel', 'topic'])) {
+            return String(prefill.subject || '');
+        }
+
+        return '';
+    }
+
+    function normalizeFieldHint(value) {
+        return String(value || '')
+            .toLowerCase()
+            .replace(/ä/g, 'ae')
+            .replace(/ö/g, 'oe')
+            .replace(/ü/g, 'ue')
+            .replace(/ß/g, 'ss');
+    }
+
+    function hasAnyHint(haystack, needles) {
+        return needles.some(function (needle) {
+            return haystack.indexOf(String(needle || '')) !== -1;
+        });
     }
 
     function closePopup(formId) {

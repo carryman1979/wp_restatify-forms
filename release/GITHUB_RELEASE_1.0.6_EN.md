@@ -7,6 +7,12 @@
 - The admin mail-template editor now uses resolved shared base URL and shared base path.
 - Copilot repo guidance now includes the shared loader order rule.
 
+## Release-prep refresh (2026-05-30)
+
+- No version bump: release prep remains on `1.0.6`.
+- Admin/frontend look-and-feel refinements (including dark-theme related polish) were consolidated.
+- Mail-editor helpers plus submission/UI refactor paths and tests were synchronized for rollout.
+
 ## Compatibility
 
 - Plugin version: `1.0.6`

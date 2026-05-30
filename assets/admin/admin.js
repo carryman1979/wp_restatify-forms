@@ -3,6 +3,7 @@
     'use strict';
 
     var cfg      = window.rsfmAdmin || {};
+    var mailEditorHelpers = window.RsfmAdminMailEditorHelpers || {};
     var strings  = cfg.strings  || {};
     var ajaxUrl  = cfg.ajaxUrl  || '';
     var nonce    = cfg.nonce    || '';
@@ -113,78 +114,27 @@
     }
 
     function initSharedMailEditorHelpers() {
-        var shared = window.RestatifySharedMailEditor;
-        if (!shared) {
+        if (typeof mailEditorHelpers.initSharedMailEditorHelpers === 'function') {
+            mailEditorHelpers.initSharedMailEditorHelpers();
+        }
+    }
+
+    function bindMailEditorSync(textarea, submissionKey) {
+        if (typeof mailEditorHelpers.bindMailEditorSync !== 'function') {
             return;
         }
 
-        if (typeof shared.initTabSystem === 'function') {
-            shared.initTabSystem({
-                tabSelector: '[data-rsfm-tab]',
-                panelSelector: '[data-rsfm-tab-panel]',
-                tabGroupAttr: 'data-rsfm-tab',
-                panelGroupAttr: 'data-rsfm-tab-panel',
-                panelAttr: 'data-rsfm-panel',
-                activeClass: 'is-active',
-                onSwitch: function (group, panel) {
-                    if (panel === 'code') {
-                        if (group === 'owner' && typeof shared.syncCodeFromEditor === 'function') {
-                            shared.syncCodeFromEditor('rsfm-owner-body', '[data-rs-mail-html-code-for]', 'data-rs-mail-html-code-for');
-                        }
-                        if (group === 'confirmation' && typeof shared.syncCodeFromEditor === 'function') {
-                            shared.syncCodeFromEditor('rsfm-confirmation-body', '[data-rs-mail-html-code-for]', 'data-rs-mail-html-code-for');
-                        }
-                    }
-                }
-            });
-        }
-
-        if (typeof shared.bindHtmlCodeSync === 'function') {
-            shared.bindHtmlCodeSync({
-                codeSelector: '[data-rs-mail-html-code-for]',
-                codeForAttr: 'data-rs-mail-html-code-for'
-            });
-        }
-
-        if (typeof shared.initPlaceholderButtons === 'function') {
-            shared.initPlaceholderButtons({
-                buttonSelector: '.rsfm-placeholder-chip',
-                placeholderAttr: 'data-placeholder',
-                targetAttr: 'data-target',
-                onAfterEditorInsert: function (editorId) {
-                    if (typeof shared.syncCodeFromEditor === 'function') {
-                        shared.syncCodeFromEditor(editorId, '[data-rs-mail-html-code-for]', 'data-rs-mail-html-code-for');
-                    }
-                }
-            });
-        }
-    }
-
-    function canUseWpEditor() {
-        return !!(window.wp && window.wp.editor && typeof window.wp.editor.initialize === 'function');
-    }
-
-    function getTinyMceEditor(editorId) {
-        if (!window.tinymce || typeof window.tinymce.get !== 'function') {
-            return null;
-        }
-        return window.tinymce.get(editorId);
-    }
-
-    function setMailEditorValue(textarea, value) {
-        if (!textarea) { return; }
-        textarea.value = value || '';
-
-        var editor = getTinyMceEditor(textarea.id);
-        if (editor && typeof editor.setContent === 'function') {
-            editor.setContent(value || '');
-        }
+        mailEditorHelpers.bindMailEditorSync(textarea, submissionKey, {
+            ownerBodyCodeTextarea: ownerBodyCodeTextarea,
+            confirmBodyCodeTextarea: confirmBodyCodeTextarea,
+            mailEditorState: mailEditorState,
+            state: state,
+        });
     }
 
     function setHtmlTemplateValue(htmlTextarea, codeTextarea, value) {
-        setMailEditorValue(htmlTextarea, value || '');
-        if (codeTextarea) {
-            codeTextarea.value = value || '';
+        if (typeof mailEditorHelpers.setHtmlTemplateValue === 'function') {
+            mailEditorHelpers.setHtmlTemplateValue(htmlTextarea, codeTextarea, value);
         }
     }
 
@@ -199,76 +149,19 @@
         state.dirty = true;
     }
 
-    function initMailEditor(textarea, submissionKey) {
-        if (!(textarea instanceof HTMLTextAreaElement)) { return; }
-        if (!canUseWpEditor()) { return; }
-
-        var slot = mailEditorState[submissionKey];
-        if (!slot || slot.initialized) {
-            return;
-        }
-
-        window.wp.editor.initialize(textarea.id, {
-            tinymce: {
-                wpautop: true,
-                toolbar1: 'formatselect,bold,italic,bullist,numlist,blockquote,link,unlink,undo,redo,removeformat',
-                toolbar2: '',
-            },
-            quicktags: false,
-            mediaButtons: false,
-        });
-
-        slot.initialized = true;
-        bindMailEditorSync(textarea, submissionKey);
-    }
-
-    function bindMailEditorSync(textarea, submissionKey) {
-        var slot = mailEditorState[submissionKey];
-        if (!slot || slot.bindingAttached || !(textarea instanceof HTMLTextAreaElement)) {
-            return;
-        }
-
-        var codeMirrorTextarea = null;
-        if (submissionKey === 'owner_html_body') {
-            codeMirrorTextarea = ownerBodyCodeTextarea;
-        }
-        if (submissionKey === 'confirmation_html_body') {
-            codeMirrorTextarea = confirmBodyCodeTextarea;
-        }
-
-        var syncTextarea = function () {
-            state.form.submission[submissionKey] = textarea.value || '';
-            if (codeMirrorTextarea) {
-                codeMirrorTextarea.value = textarea.value || '';
-            }
-            state.dirty = true;
-        };
-
-        textarea.addEventListener('input', syncTextarea);
-
-        var attachEditorBinding = function () {
-            var editor = getTinyMceEditor(textarea.id);
-            if (!editor) {
-                window.requestAnimationFrame(attachEditorBinding);
-                return;
-            }
-
-            editor.on('change keyup SetContent', function () {
-                state.form.submission[submissionKey] = editor.getContent();
-                if (codeMirrorTextarea) {
-                    codeMirrorTextarea.value = editor.getContent();
-                }
-                state.dirty = true;
-            });
-        };
-
-        window.requestAnimationFrame(attachEditorBinding);
-        slot.bindingAttached = true;
-    }
-
     function initMailTemplateEditors() {
-        initMailEditor(ownerBodyTextarea, 'owner_html_body');
-        initMailEditor(confirmBodyTextarea, 'confirmation_html_body');
+        if (typeof mailEditorHelpers.initMailTemplateEditors !== 'function') {
+            return;
+        }
+
+        mailEditorHelpers.initMailTemplateEditors({
+            ownerBodyTextarea: ownerBodyTextarea,
+            confirmBodyTextarea: confirmBodyTextarea,
+            ownerBodyCodeTextarea: ownerBodyCodeTextarea,
+            confirmBodyCodeTextarea: confirmBodyCodeTextarea,
+            mailEditorState: mailEditorState,
+            state: state,
+        });
     }
 
     function resetMailTemplate(group) {

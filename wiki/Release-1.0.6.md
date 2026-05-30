@@ -9,6 +9,12 @@ Version 1.0.6 harmonisiert die Shared-Aufloesung fuer lokale und produktive Umge
 - Admin-Mail-Template-Editor referenziert die aufgeloeste Shared-Base-URL/-Path statt eines festen Pfads.
 - Copilot-Repo-Beschreibung zur Shared-Loader-Reihenfolge aktualisiert.
 
+## Release-prep refresh (2026-05-30)
+
+- Kein Versionssprung: Release-Prep verbleibt auf `1.0.6`.
+- UI-/Admin-Refactorings sowie Dark-Theme-nahe Frontend-Anpassungen konsolidiert.
+- Mail-Editor-/Submission-/UI-Pfade und Test-Baseline fuer den koordinierten Rollout abgeglichen.
+
 ## Kompatibilitaet
 
 - Plugin-Version: `1.0.6`

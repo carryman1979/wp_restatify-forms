@@ -17,6 +17,11 @@ final class Restatify_Forms_Admin_Page {
     // Asset enqueueing
     // -------------------------------------------------------------------------
 
+    /**
+     * Enqueues scripts and styles for forms list and editor admin pages.
+     *
+     * @param string $hook Current admin page hook suffix.
+     */
     public function enqueue_admin_assets( string $hook ): void {
         $valid_hooks = [
             'toplevel_page_' . Restatify_Forms_Constants::ADMIN_PAGE_SLUG,
@@ -62,9 +67,19 @@ final class Restatify_Forms_Admin_Page {
         );
 
         wp_enqueue_script(
+            'wp-restatify-forms-admin-mail-editor-helpers',
+            $base_url . 'admin-mail-editor-helpers.js',
+            [ 'restatify-shared-mail-template-editor' ],
+            file_exists( $base_path . 'admin-mail-editor-helpers.js' )
+                ? (string) filemtime( $base_path . 'admin-mail-editor-helpers.js' )
+                : RESTATIFY_FORMS_VERSION,
+            true
+        );
+
+        wp_enqueue_script(
             'wp-restatify-forms-admin',
             $base_url . 'admin.js',
-            [ 'jquery', 'restatify-shared-mail-template-editor' ],
+            [ 'jquery', 'wp-restatify-forms-admin-mail-editor-helpers' ],
             file_exists( $base_path . 'admin.js' )
                 ? (string) filemtime( $base_path . 'admin.js' )
                 : RESTATIFY_FORMS_VERSION,
