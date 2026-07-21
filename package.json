@@ -1,6 +1,6 @@
 {
   "name": "wp-restatify-forms",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Restatify Forms – Multi-form popup builder for WordPress",
   "scripts": {
     "build": "wp-scripts build src/block/index.js --output-path=build/block && node -e \"const fs=require('fs');fs.mkdirSync('build/block',{recursive:true});fs.copyFileSync('src/block/block.json','build/block/block.json');fs.copyFileSync('src/block/render.php','build/block/render.php');if(fs.existsSync('build/block/block')){fs.rmSync('build/block/block',{recursive:true,force:true});}\"",
