@@ -242,6 +242,10 @@
     }
 
     function pickPrefillValue(prefill, fieldWrap, input, fid) {
+        if (Object.prototype.hasOwnProperty.call(prefill, fid)) {
+            return String(prefill[fid] || '');
+        }
+
         var idHint = normalizeFieldHint(fid);
         var labelEl = fieldWrap.querySelector('.rsfm-label');
         var labelHint = normalizeFieldHint(labelEl ? labelEl.textContent : '');
