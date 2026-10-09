@@ -19,6 +19,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Checkout shared test fixture
+        uses: actions/checkout@v4
+        with:
+          repository: carryman1979/wp_restatify-shared
+          ref: 21d3d6caeb764e929b757e11407f3e218c36221c
+          path: .shared-test-fixture
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -31,6 +38,8 @@ jobs:
 
       - name: Run PHP unit tests
         run: composer run test:unit:php
+        env:
+          RESTATIFY_SHARED_TEST_ROOT: ${{ github.workspace }}/.shared-test-fixture
 
   js-unit:
     name: JS Unit

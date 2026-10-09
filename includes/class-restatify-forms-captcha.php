@@ -4,6 +4,8 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+use Restatify\Shared\Security\CaptchaVerifier;
+
 /**
  * Verifies CAPTCHA tokens for reCAPTCHA v3 and Cloudflare Turnstile.
  */
@@ -56,113 +58,27 @@ final class Restatify_Forms_Captcha {
             return false;
         }
 
+        $secret = '';
         if ( $provider === 'recaptcha' ) {
-            return $this->verify_recaptcha( (string) ( $security['recaptcha_secret_key'] ?? '' ), $token );
-        }
-
-        if ( $provider === 'turnstile' ) {
-            return $this->verify_turnstile( (string) ( $security['turnstile_secret_key'] ?? '' ), $token );
-        }
-
-        return false;
-    }
-
-    // -------------------------------------------------------------------------
-    // Private helpers
-    // -------------------------------------------------------------------------
-
-    private function verify_recaptcha( string $secret, string $token ): bool {
-        if ( $secret === '' ) {
-            $this->debug_log('reCAPTCHA secret is empty.', [ 'provider' => 'recaptcha' ]);
+            $secret = (string) ( $security['recaptcha_secret_key'] ?? '' );
+        } elseif ( $provider === 'turnstile' ) {
+            $secret = (string) ( $security['turnstile_secret_key'] ?? '' );
+        } else {
             return false;
         }
 
-        $response = wp_remote_post(
-            'https://www.google.com/recaptcha/api/siteverify',
-            [
-                'body'    => [
-                    'secret'   => $secret,
-                    'response' => $token,
-                    'remoteip' => $this->get_client_ip(),
-                ],
-                'timeout' => 10,
-            ]
+        $verified = CaptchaVerifier::verify(
+            $provider,
+            $secret,
+            $token,
+            $this->get_client_ip()
         );
 
-        if ( is_wp_error( $response ) ) {
-            $this->debug_log(
-                'reCAPTCHA request failed.',
-                [
-                    'provider' => 'recaptcha',
-                    'error'    => $response->get_error_message(),
-                ]
-            );
-            return false;
+        if ( ! $verified ) {
+            $this->debug_log('CAPTCHA verification failed.', [ 'provider' => $provider ]);
         }
 
-        $body = json_decode( wp_remote_retrieve_body( $response ), true );
-        $success = is_array( $body ) && ! empty( $body['success'] );
-        $score   = is_array( $body ) ? (float) ( $body['score'] ?? 0 ) : 0.0;
-        $valid   = $success && $score >= 0.5;
-
-        if ( ! $valid ) {
-            $this->debug_log(
-                'reCAPTCHA verification failed.',
-                [
-                    'provider'    => 'recaptcha',
-                    'success'     => $success,
-                    'score'       => $score,
-                    'error_codes' => is_array( $body ) ? ( $body['error-codes'] ?? [] ) : [ 'invalid-json-response' ],
-                ]
-            );
-        }
-
-        return $valid;
-    }
-
-    private function verify_turnstile( string $secret, string $token ): bool {
-        if ( $secret === '' ) {
-            $this->debug_log('Turnstile secret is empty.', [ 'provider' => 'turnstile' ]);
-            return false;
-        }
-
-        $response = wp_remote_post(
-            'https://challenges.cloudflare.com/turnstile/v0/siteverify',
-            [
-                'body'    => [
-                    'secret'   => $secret,
-                    'response' => $token,
-                    'remoteip' => $this->get_client_ip(),
-                ],
-                'timeout' => 10,
-            ]
-        );
-
-        if ( is_wp_error( $response ) ) {
-            $this->debug_log(
-                'Turnstile request failed.',
-                [
-                    'provider' => 'turnstile',
-                    'error'    => $response->get_error_message(),
-                ]
-            );
-            return false;
-        }
-
-        $body = json_decode( wp_remote_retrieve_body( $response ), true );
-
-        $valid = is_array( $body ) && ! empty( $body['success'] );
-        if ( ! $valid ) {
-            $this->debug_log(
-                'Turnstile verification failed.',
-                [
-                    'provider'    => 'turnstile',
-                    'error_codes' => is_array( $body ) ? ( $body['error-codes'] ?? [] ) : [ 'invalid-json-response' ],
-                ]
-            );
-        }
-
-        return $valid;
+        return $verified;
     }
 
     /**

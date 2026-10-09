@@ -27,12 +27,23 @@ if (-not $sharedVersionMatch.Success) {
 
 $sharedVersion = $sharedVersionMatch.Groups[1].Value.Trim()
 
+$sharedPackagePath = [System.IO.Path]::GetFullPath((Join-Path $pluginRoot '../../../wp_restatify-shared/package.json'))
+$sharedPackage = Get-Content $sharedPackagePath -Raw | ConvertFrom-Json
+if ($sharedPackage.version -ne $sharedVersion) {
+    throw "Shared source version $($sharedPackage.version) does not match required version $sharedVersion"
+}
+
 Write-Output "Packaging version: $Version"
 
 # Ensure the block is built before packaging
 if (Test-Path (Join-Path $pluginRoot 'node_modules')) {
     Write-Output "Running production build..."
     & npm run build
+    if ($LASTEXITCODE -ne 0) {
+        throw "Forms production build failed with exit code $LASTEXITCODE"
+    }
+} else {
+    throw 'Install the build dependencies with npm ci before packaging.'
 }
 
 $releaseDir = Join-Path $pluginRoot 'release'
