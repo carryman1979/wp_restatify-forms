@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Restatify Forms
  * Description: Multi-form popup builder with configurable fields, email templates and custom endpoint forwarding.
- * Version: 1.0.8
+ * Version:           1.1.0
  * Author: Restatify
  * License: GPL-2.0-or-later
  * Requires at least: 6.9
@@ -27,11 +27,11 @@ if ( ! defined( 'RESTATIFY_FORMS_PLUGIN_URL' ) ) {
 }
 
 if ( ! defined( 'RESTATIFY_FORMS_VERSION' ) ) {
-    define( 'RESTATIFY_FORMS_VERSION', '1.0.8' );
+    define( 'RESTATIFY_FORMS_VERSION', '1.1.0' );
 }
 
 if ( ! defined( 'RESTATIFY_FORMS_SHARED_VERSION' ) ) {
-    define( 'RESTATIFY_FORMS_SHARED_VERSION', '1.0.2' );
+    define( 'RESTATIFY_FORMS_SHARED_VERSION', '1.1.0' );
 }
 
 require_once RESTATIFY_FORMS_PLUGIN_DIR . 'includes/class-restatify-forms-shared-library.php';
@@ -178,9 +178,14 @@ $restatify_forms_require_shared( 'src/php/Mail/MailDispatcher.php', '\\Restatify
 $restatify_forms_require_shared( 'src/php/Mail/PlaceholderCatalog.php', '\\Restatify\\Shared\\Mail\\PlaceholderCatalog' );
 $restatify_forms_require_shared( 'src/php/I18n/PolylangAdapter.php', '\\Restatify\\Shared\\I18n\\PolylangAdapter' );
 $restatify_forms_require_shared( 'src/php/Util/PrivacyLegalNotice.php', '\\Restatify\\Shared\\Util\\PrivacyLegalNotice' );
+$restatify_forms_require_shared( 'src/php/Security/CaptchaVerifier.php', '\\Restatify\\Shared\\Security\\CaptchaVerifier' );
 
 if ( ! class_exists( '\\Restatify\\Shared\\Util\\PrivacyLegalNotice', false ) ) {
     throw new RuntimeException( 'Missing required shared dependency: wp_restatify-shared/src/php/Util/PrivacyLegalNotice.php' );
+}
+
+if ( ! class_exists( '\\Restatify\\Shared\\Security\\CaptchaVerifier', false ) ) {
+    throw new RuntimeException( 'Missing required shared dependency: wp_restatify-shared/src/php/Security/CaptchaVerifier.php' );
 }
 
 require_once RESTATIFY_FORMS_PLUGIN_DIR . 'includes/class-restatify-forms-constants.php';
@@ -193,4 +198,3 @@ require_once RESTATIFY_FORMS_PLUGIN_DIR . 'includes/class-restatify-forms-admin-
 require_once RESTATIFY_FORMS_PLUGIN_DIR . 'includes/class-restatify-forms-plugin.php';
 
 new Restatify_Forms_Plugin( RESTATIFY_FORMS_PLUGIN_FILE );
-

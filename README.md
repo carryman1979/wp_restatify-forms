@@ -3,7 +3,7 @@
 Product: Restatify-Forms  
 Slug: wp_restatify-forms  
 Company: https://www.restatify.tech
-Version: 1.0.8
+Version: 1.1.0
 
 A standalone WordPress plugin that provides a multi-form popup builder with a multi-step admin wizard, configurable field types, email/tel validation, CAPTCHA options, and flexible submission modes (wp_mail or custom endpoint).
 
@@ -104,6 +104,13 @@ See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ## Changelog
 
+### 1.1.0
+
+- Reuse the shared CAPTCHA verifier for reCAPTCHA v3 and Cloudflare Turnstile.
+- Require and bundle exact shared version `1.1.0`; keep the local-root development loader.
+- Preserve existing missing-key bypass behavior and the default reCAPTCHA score threshold.
+- Abort release packaging if the production build fails or dependencies are missing.
+
 ### 1.0.8
 
 - Maintenance release consolidating current local frontend/admin adjustments.
@@ -133,4 +140,3 @@ See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 ## License
 
 GPL-2.0-or-later — see [LICENSE](LICENSE).
-

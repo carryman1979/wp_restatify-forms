@@ -61,6 +61,7 @@ if ( ! function_exists( 'restatify_forms_shared_required_file_list' ) ) {
             'Runtime/BootstrapGuard.php',
             'Runtime/PluginState.php',
             'Runtime/RateLimiter.php',
+            'Security/CaptchaVerifier.php',
             'Util/BookingContactChannelProfiles.php',
             'Util/BookingContactChannels.php',
             'Util/BookingContactMethodsResolver.php',
